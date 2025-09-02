@@ -52,7 +52,6 @@ CREATE TABLE Responsable(
   FOREIGN KEY(idPersona) REFERENCES Persona(idPersona)
 );
 
--- ✅ Ahora sí creamos Producto después de Responsable
 CREATE TABLE Producto(
   idProducto INT AUTO_INCREMENT PRIMARY KEY,
   idStand INT,
