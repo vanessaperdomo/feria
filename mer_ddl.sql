@@ -109,3 +109,11 @@ CREATE TABLE Registro(
     FOREIGN KEY(idDemostracion) REFERENCES Demostracion(idDemostracion),
     FOREIGN KEY(idFeria) REFERENCES Feria(idFeria)
 );
+
+CREATE TABLE LogEventos (
+    idLog INT AUTO_INCREMENT PRIMARY KEY,
+    tabla VARCHAR(100),
+    accion VARCHAR(50),
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    usuario VARCHAR(100)
+);
