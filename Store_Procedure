@@ -1,0 +1,47 @@
+USE Evento_Actualizado;
+
+DELIMITER //
+CREATE PROCEDURE sp_ListarFeriasPorRangoFechas(
+    IN fecha_inicio DATE,
+    IN fecha_fin DATE
+)
+BEGIN
+    SELECT idFeria, nom_feria, ciudad, fecha_inicio, fecha_fin
+    FROM Feria
+    WHERE fecha_inicio BETWEEN fecha_inicio AND fecha_fin;
+END //
+DELIMITER ;
+
+CALL sp_ListarFeriasPorRangoFechas('2025-06-01', '2025-10-30');
+
+
+DELIMITER //
+CREATE PROCEDURE sp_BuscarPersonaPorDNI(
+    IN dni_buscar VARCHAR(100)
+)
+BEGIN
+    SELECT idPersona, nombre, apellido, dni, email, telefono
+    FROM Persona
+    WHERE dni = dni_buscar;
+END //
+DELIMITER ;
+
+CALL sp_BuscarPersonaPorDNI('12345678');
+
+
+DELIMITER //
+CREATE PROCEDURE sp_VisitantesPorFeria(
+    IN feria_id INT
+)
+BEGIN
+    SELECT v.idVisitante, per.nombre, per.apellido, tv.descripcion AS TipoVisitante, f.nom_feria
+    FROM Registro r
+    JOIN Visitante v ON r.idVisitante = v.idVisitante
+    JOIN Persona per ON v.idPersona = per.idPersona
+    JOIN TipoVisitante tv ON v.idTipo = tv.idTipo
+    JOIN Feria f ON r.idFeria = f.idFeria
+    WHERE f.idFeria = feria_id;
+END //
+DELIMITER ;
+
+CALL sp_VisitantesPorFeria(1);
