@@ -1,0 +1,3 @@
+CREATE DATABASE Evento_Tecnologia;
+CREATE DATABASE Evento_Libros;
+CREATE DATABASE Evento_Agro;
