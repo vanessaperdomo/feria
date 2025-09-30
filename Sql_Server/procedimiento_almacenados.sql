@@ -1,38 +1,40 @@
 USE Evento_Actualizado;
 GO
 
--- Insertar feria
-CREATE PROCEDURE feria_schema.sp_insertar_feria
- @nombre NVARCHAR(100),
- @ciudad NVARCHAR(100),
- @fecha_inicio DATE,
- @fecha_fin DATE
+CREATE PROCEDURE sp_ListarFeriasPorCiudad
+    @Ciudad VARCHAR(100)
 AS
 BEGIN
-  INSERT INTO Feria(nom_feria, ciudad, fecha_inicio, fecha_fin)
-  VALUES (@nombre, @ciudad, @fecha_inicio, @fecha_fin);
-END
+    SELECT idFeria, nom_feria, fecha_inicio, fecha_fin
+    FROM Feria
+    WHERE ciudad = @Ciudad;
+END;
 GO
 
--- Actualizar empresa
-CREATE PROCEDURE empresa_schema.sp_actualizar_empresa
- @idEmpresa INT,
- @nombre NVARCHAR(100)
+EXEC sp_ListarFeriasPorCiudad @Ciudad = 'Bogota';
+
+CREATE PROCEDURE sp_BuscarPersonaPorDNI
+    @DNI VARCHAR(100)
 AS
 BEGIN
-  UPDATE Empresa
-  SET nombre = @nombre
-  WHERE idEmpresa = @idEmpresa;
-END
+    SELECT idPersona, nombre, apellido, email, telefono
+    FROM Persona
+    WHERE dni = @DNI;
+END;
 GO
 
--- Listar visitantes
-CREATE PROCEDURE visitante_schema.sp_listar_visitantes
+EXEC sp_BuscarPersonaPorDNI @DNI = '12345678';
+
+CREATE PROCEDURE sp_ListarProductosPorEmpresa
+    @Empresa VARCHAR(100)
 AS
 BEGIN
-  SELECT v.idVisitante, p.nombre, p.apellido, t.descripcion AS TipoVisitante
-  FROM Visitante v
-  INNER JOIN Persona p ON v.idPersona = p.idPersona
-  INNER JOIN TipoVisitante t ON v.idTipo = t.idTipo;
-END
+    SELECT p.nombre AS Producto, p.descripcion, e.nombre AS Empresa
+    FROM Producto p
+    JOIN Stand s ON p.idStand = s.idStand
+    JOIN Empresa e ON s.idEmpresa = e.idEmpresa
+    WHERE e.nombre = @Empresa;
+END;
 GO
+
+EXEC sp_ListarProductosPorEmpresa @Empresa = 'TechCorp';
