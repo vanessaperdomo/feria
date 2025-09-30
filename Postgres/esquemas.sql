@@ -1,132 +1,71 @@
--- ==============================================
--- 1. LIMPIEZA (borra lo viejo para evitar errores)
--- ==============================================
-DROP SCHEMA IF EXISTS feria_schema CASCADE;
-DROP SCHEMA IF EXISTS empresa_schema CASCADE;
-DROP SCHEMA IF EXISTS visitante_schema CASCADE;
+-- ==========================================
+-- 0. Conectarse a la base de datos
+-- ==========================================
 
--- Borramos usuarios si existen (sin REASSIGN la primera vez)
-DROP USER IF EXISTS user_feria;
-DROP USER IF EXISTS user_empresa;
-DROP USER IF EXISTS user_visitante;
-DROP USER IF EXISTS user_admin;
+-- ==========================================
+-- 1. Crear esquemas
+-- ==========================================
+CREATE SCHEMA IF NOT EXISTS feria_schema;
+CREATE SCHEMA IF NOT EXISTS empresa_schema;
+CREATE SCHEMA IF NOT EXISTS visitante_schema;
 
--- ==============================================
--- 2. CREACIÓN DE USUARIOS
--- ==============================================
-CREATE USER user_feria WITH PASSWORD 'feria123';
-CREATE USER user_empresa WITH PASSWORD 'empresa123';
-CREATE USER user_visitante WITH PASSWORD 'visitante123';
-CREATE USER user_admin WITH PASSWORD 'admin123';
+-- ==========================================
+-- 2. Crear roles
+-- ==========================================
+CREATE ROLE role_general WITH LOGIN PASSWORD 'PasswordGeneral123';
+CREATE ROLE role_feria WITH LOGIN PASSWORD 'PasswordFeria123';
+CREATE ROLE role_empresa WITH LOGIN PASSWORD 'PasswordEmpresa123';
+CREATE ROLE role_visitante WITH LOGIN PASSWORD 'PasswordVisitante123';
 
--- ==============================================
--- 3. CREACIÓN DE ESQUEMAS
--- ==============================================
-CREATE SCHEMA feria_schema AUTHORIZATION user_feria;
-CREATE SCHEMA empresa_schema AUTHORIZATION user_empresa;
-CREATE SCHEMA visitante_schema AUTHORIZATION user_visitante;
+-- ==========================================
+-- 3. Mover tablas existentes a sus esquemas
+-- ==========================================
+-- Tablas de Feria
+ALTER TABLE IF EXISTS Feria SET SCHEMA feria_schema;
+ALTER TABLE IF EXISTS Pabellon SET SCHEMA feria_schema;
 
--- ==============================================
--- 4. TABLAS EN CADA ESQUEMA
--- ==============================================
+-- Tablas de Empresa
+ALTER TABLE IF EXISTS Empresa SET SCHEMA empresa_schema;
+ALTER TABLE IF EXISTS Stand SET SCHEMA empresa_schema;
+ALTER TABLE IF EXISTS Producto SET SCHEMA empresa_schema;
+ALTER TABLE IF EXISTS Ponente SET SCHEMA empresa_schema;
+ALTER TABLE IF EXISTS Charla SET SCHEMA empresa_schema;
+ALTER TABLE IF EXISTS Responsable SET SCHEMA empresa_schema;
 
--- ===========================
--- ESQUEMA FERIA
--- ===========================
-SET ROLE user_feria;
+-- Tablas de Visitante
+ALTER TABLE IF EXISTS Persona SET SCHEMA visitante_schema;
+ALTER TABLE IF EXISTS Visitante SET SCHEMA visitante_schema;
+ALTER TABLE IF EXISTS TipoVisitante SET SCHEMA visitante_schema;
+ALTER TABLE IF EXISTS Demostracion SET SCHEMA visitante_schema;
+ALTER TABLE IF EXISTS Registro SET SCHEMA visitante_schema;
 
-CREATE TABLE feria_schema.Feria(
-   idFeria SERIAL PRIMARY KEY,
-   nom_feria VARCHAR(100),
-   ciudad VARCHAR(100),
-   fecha_inicio DATE,
-   fecha_fin DATE
-);
+-- ==========================================
+-- 4. Asignar permisos por esquema
+-- ==========================================
+-- Feria
+GRANT USAGE, CREATE ON SCHEMA feria_schema TO role_feria;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA feria_schema TO role_feria;
+ALTER DEFAULT PRIVILEGES IN SCHEMA feria_schema GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO role_feria;
 
-CREATE TABLE feria_schema.Tematica(
-   idTematica SERIAL PRIMARY KEY,
-   nombre VARCHAR(100)
-);
+-- Empresa
+GRANT USAGE, CREATE ON SCHEMA empresa_schema TO role_empresa;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA empresa_schema TO role_empresa;
+ALTER DEFAULT PRIVILEGES IN SCHEMA empresa_schema GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO role_empresa;
 
-CREATE TABLE feria_schema.Pabellon(
-   idPabellon SERIAL PRIMARY KEY,
-   idFeria INT,
-   idTematica INT,
-   nombre VARCHAR(100),
-   FOREIGN KEY(idFeria) REFERENCES feria_schema.Feria(idFeria),
-   FOREIGN KEY(idTematica) REFERENCES feria_schema.Tematica(idTematica)
-);
+-- Visitante
+GRANT USAGE, CREATE ON SCHEMA visitante_schema TO role_visitante;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA visitante_schema TO role_visitante;
+ALTER DEFAULT PRIVILEGES IN SCHEMA visitante_schema GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO role_visitante;
 
--- ===========================
--- ESQUEMA EMPRESA
--- ===========================
-SET ROLE user_empresa;
+-- ==========================================
+-- 5. Asignar permisos al rol general
+-- ==========================================
+GRANT role_feria, role_empresa, role_visitante TO role_general;
+GRANT CONNECT ON DATABASE "Evento_Actualizado" TO role_general;
 
-CREATE TABLE empresa_schema.Empresa(
-   idEmpresa SERIAL PRIMARY KEY,
-   nombre VARCHAR(100)
-);
-
-CREATE TABLE empresa_schema.Stand(
-   idStand SERIAL PRIMARY KEY,
-   idEmpresa INT,
-   idPabellon INT,
-   nombre VARCHAR(100)
-);
-
-CREATE TABLE empresa_schema.Producto(
-   idProducto SERIAL PRIMARY KEY,
-   idStand INT,
-   nombre VARCHAR(100),
-   descripcion TEXT
-);
-
--- ===========================
--- ESQUEMA VISITANTE
--- ===========================
-SET ROLE user_visitante;
-
-CREATE TABLE visitante_schema.Persona(
-   idPersona SERIAL PRIMARY KEY,
-   nombre VARCHAR(100),
-   apellido VARCHAR(100),
-   dni VARCHAR(100),
-   email VARCHAR(50),
-   telefono VARCHAR(20)
-);
-
-CREATE TABLE visitante_schema.Visitante(
-   idVisitante SERIAL PRIMARY KEY,
-   idPersona INT,
-   tipo VARCHAR(50),
-   FOREIGN KEY(idPersona) REFERENCES visitante_schema.Persona(idPersona)
-);
-
-CREATE TABLE visitante_schema.Registro(
-   idRegistro SERIAL PRIMARY KEY,
-   idVisitante INT,
-   detalle VARCHAR(200),
-   FOREIGN KEY(idVisitante) REFERENCES visitante_schema.Visitante(idVisitante)
-);
-
-RESET ROLE;
-
--- ==============================================
--- 5. PERMISOS
--- ==============================================
-GRANT ALL PRIVILEGES ON SCHEMA feria_schema TO user_feria;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA feria_schema TO user_feria;
-
-GRANT ALL PRIVILEGES ON SCHEMA empresa_schema TO user_empresa;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA empresa_schema TO user_empresa;
-
-GRANT ALL PRIVILEGES ON SCHEMA visitante_schema TO user_visitante;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA visitante_schema TO user_visitante;
-
--- Admin con acceso total
-GRANT ALL PRIVILEGES ON SCHEMA feria_schema TO user_admin;
-GRANT ALL PRIVILEGES ON SCHEMA empresa_schema TO user_admin;
-GRANT ALL PRIVILEGES ON SCHEMA visitante_schema TO user_admin;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA feria_schema TO user_admin;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA empresa_schema TO user_admin;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA visitante_schema TO user_admin;
+-- ==========================================
+-- 6. Cambiar propietario de los esquemas
+-- ==========================================
+ALTER SCHEMA feria_schema OWNER TO role_feria;
+ALTER SCHEMA empresa_schema OWNER TO role_empresa;
+ALTER SCHEMA visitante_schema OWNER TO role_visitante;
